@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Store } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
 
 export default function AuthLayout({
   children,
@@ -7,15 +6,11 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-muted/40 px-4 py-10">
-      <Link
-        href="/"
-        className="mb-6 flex items-center gap-2 text-lg font-semibold"
-      >
-        <Store className="size-6 text-primary" aria-hidden />
-        ตลาดออนไลน์
-      </Link>
-      <div className="w-full max-w-md">{children}</div>
-    </div>
+    <>
+      <SiteHeader />
+      <main className="flex flex-1 flex-col items-center justify-center bg-muted/40 px-4 py-10">
+        <div className="w-full max-w-md">{children}</div>
+      </main>
+    </>
   );
 }
