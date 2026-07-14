@@ -1,0 +1,6 @@
+# Supabase project config. Cloud project ref is used by `supabase link` / `supabase gen types`.
+project_id = "pxzfnnupgsmgaqnsoxgb"
+
+[db]
+# Postgres major version of the cloud project.
+major_version = 17
