@@ -19,6 +19,7 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
+          email: string | null;
           role: Database["public"]["Enums"]["user_role"];
           status: Database["public"]["Enums"]["user_status"];
           full_name: string | null;
@@ -29,6 +30,7 @@ export type Database = {
         };
         Insert: {
           id: string;
+          email?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           status?: Database["public"]["Enums"]["user_status"];
           full_name?: string | null;
@@ -39,6 +41,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          email?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           status?: Database["public"]["Enums"]["user_status"];
           full_name?: string | null;
@@ -915,6 +918,25 @@ export type Database = {
       owns_shop: {
         Args: { p_shop_id: string };
         Returns: boolean;
+      };
+      approve_seller_application: {
+        Args: { p_application_id: string };
+        Returns: undefined;
+      };
+      reject_seller_application: {
+        Args: { p_application_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      set_user_status: {
+        Args: {
+          p_user_id: string;
+          p_status: Database["public"]["Enums"]["user_status"];
+        };
+        Returns: undefined;
+      };
+      promote_to_admin: {
+        Args: { p_user_id: string };
+        Returns: undefined;
       };
     };
     Enums: {
