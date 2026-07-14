@@ -3,6 +3,26 @@
 ระบบร้านค้าออนไลน์แบบหลายผู้ขาย มี 3 role: **buyer / seller / admin**
 พัฒนาทีละ Phase ตาม Section 7 — จบแต่ละ Phase ให้หยุดรอผู้ใช้ทดสอบก่อนเสมอ
 
+## 0. สถานะปัจจุบัน (อัปเดตล่าสุด: 2026-07-15)
+
+| Phase | สถานะ | Commit |
+|---|---|---|
+| 0 — Setup & Database | ✅ เสร็จ | `01e07c5` |
+| 1 — Auth & Roles | ✅ เสร็จ | `fea4d72`, `8054c80`, `4e4a551` |
+| 2 — Admin: อนุมัติผู้ขาย & จัดการผู้ใช้ | ✅ เสร็จ | `e496839` |
+| 3 — Seller: ร้านค้า & สินค้า | ✅ เสร็จ (ทดสอบแล้ว) | — |
+| 4 — Storefront | ⏳ ถัดไป (ยังไม่เริ่ม) | — |
+| 5-8 | ⬜ ยังไม่เริ่ม | — |
+
+**สิ่งที่เบี่ยงจากสเปกเดิม (อนุมัติโดยผู้ใช้ระหว่างทางแล้ว):**
+- ใช้ **Next.js 16** (ไม่ใช่ 15 ตาม Section 1) — `create-next-app@latest` ติดตั้ง 16 มาให้ และ `@opennextjs/cloudflare` รองรับ Next 16 อยู่แล้ว จึงใช้ต่อ (มากับ React 19 + Tailwind v4)
+- Next.js 16 เปลี่ยนชื่อไฟล์ `middleware.ts` → **`src/proxy.ts`** (export ชื่อ `proxy` แทน `middleware`) — role guard logic อยู่ไฟล์นี้
+- ใช้ **Supabase Cloud** ไม่ใช่ local (เครื่อง dev ไม่มี Docker) — migrations ยิงผ่าน `npm run db:apply` (psql ตรงไป cloud DB) แทน `supabase db reset`
+- เพิ่มฟีเจอร์ **"ตั้งเป็นผู้ดูแลระบบ"** ในหน้าจัดการผู้ใช้ (Phase 2, `/admin/users`) — โปรโมท user ธรรมดาเป็น admin ได้ผ่าน UI (นอกเหนือสเปก Section 4 เดิม ผู้ใช้ขอเพิ่มเพื่อไม่ให้มีทางสมัคร admin ตรงได้เลย)
+- `src/lib/supabase/database.types.ts` เขียนด้วยมือให้ตรง schema (ไม่ได้ auto-generate) เพราะเครื่องไม่มี Docker ให้ `supabase gen types --db-url` ใช้ — ต้องมี Supabase access token (`SUPABASE_ACCESS_TOKEN`) ก่อนจึงจะ auto-gen ผ่าน Management API ได้ (`npm run gen:types`)
+
+**บัญชีทดสอบที่มีอยู่**: admin `admin@zenityx.com` / `Admin@Zenity2026` · buyer `buyer1@test.com`, `buyer2@test.com` (รหัส `Test1234!`)
+
 ## 1. Tech Stack
 
 - **Next.js 15** (App Router, TypeScript, Server Actions) + Tailwind + shadcn/ui + Zod + Zustand (ตะกร้า)
@@ -137,7 +157,7 @@ src/app/
 src/lib/            # supabase/(client|server|admin), actions/, validators/, utils/promptpay.ts
 src/stores/         # cart-store.ts (Zustand)
 supabase/           # migrations/, seed.sql
-middleware.ts       # role guard
+src/proxy.ts        # role guard (Next.js 16 renamed middleware.ts → proxy.ts)
 ```
 
 ## 9. Deploy Notes (Cloudflare)
