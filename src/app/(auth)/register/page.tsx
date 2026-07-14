@@ -49,6 +49,7 @@ export default function RegisterPage() {
             <Input
               id="full_name"
               name="full_name"
+              placeholder="เช่น สมชาย ใจดี"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.full_name}
               required
@@ -63,6 +64,7 @@ export default function RegisterPage() {
               name="email"
               type="email"
               autoComplete="email"
+              placeholder="เช่น name@email.com"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.email}
               required
@@ -90,6 +92,7 @@ export default function RegisterPage() {
               name="password"
               type="password"
               autoComplete="new-password"
+              placeholder="ตั้งรหัสผ่านอย่างน้อย 8 ตัวอักษร"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.password}
               required

@@ -58,6 +58,7 @@ export function LoginForm({
               name="email"
               type="email"
               autoComplete="email"
+              placeholder="เช่น name@email.com"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.email}
               required
@@ -72,6 +73,7 @@ export function LoginForm({
               name="password"
               type="password"
               autoComplete="current-password"
+              placeholder="กรอกรหัสผ่านของคุณ"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.password}
               required

@@ -51,6 +51,7 @@ export function ProfileForm({
           id="full_name"
           name="full_name"
           defaultValue={fullName}
+          placeholder="เช่น สมชาย ใจดี"
           className="mt-1.5"
           aria-invalid={!!state.fieldErrors?.full_name}
           required

@@ -50,6 +50,7 @@ export default function SellerRegisterPage() {
             <Input
               id="shop_name"
               name="shop_name"
+              placeholder="เช่น ร้านของสมชาย"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.shop_name}
               required
@@ -64,6 +65,7 @@ export default function SellerRegisterPage() {
               name="id_card_number"
               inputMode="numeric"
               maxLength={13}
+              placeholder="เลขบัตรประชาชน 13 หลัก"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.id_card_number}
               required
@@ -90,6 +92,7 @@ export default function SellerRegisterPage() {
             <Textarea
               id="address"
               name="address"
+              placeholder="บ้านเลขที่ ถนน ตำบล/แขวง อำเภอ/เขต จังหวัด รหัสไปรษณีย์"
               className="mt-1.5"
               aria-invalid={!!state.fieldErrors?.address}
               required
