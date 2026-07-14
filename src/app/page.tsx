@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { SiteHeader } from "@/components/site-header";
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   clothing: Shirt,
@@ -32,32 +33,10 @@ export default async function HomePage() {
     .order("sort_order", { ascending: true });
 
   return (
-    <main className="flex-1">
-      {/* Top bar */}
-      <header className="border-b bg-card">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Store className="size-6 text-primary" aria-hidden />
-            <span className="text-lg">ตลาดออนไลน์</span>
-          </Link>
-          <nav className="flex items-center gap-2 text-sm">
-            <Link
-              href="/login"
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              เข้าสู่ระบบ
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              สมัครสมาชิก
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero */}
+    <>
+      <SiteHeader />
+      <main className="flex-1">
+        {/* Hero */}
       <section className="border-b bg-gradient-to-b from-accent/60 to-background">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:py-24">
           <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">
@@ -152,6 +131,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      </main>
+
       {/* Footer */}
       <footer className="border-t">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row">
@@ -159,9 +140,9 @@ export default async function HomePage() {
             <Store className="size-4" aria-hidden />
             ตลาดออนไลน์หลายร้านค้า
           </span>
-          <span>ระบบอยู่ระหว่างการพัฒนา — Phase 0</span>
+          <span>&copy; 2026 สงวนลิขสิทธิ์</span>
         </div>
       </footer>
-    </main>
+    </>
   );
 }
