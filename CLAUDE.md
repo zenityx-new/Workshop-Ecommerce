@@ -22,7 +22,7 @@
 - เพิ่มฟีเจอร์ **"ตั้งเป็นผู้ดูแลระบบ"** ในหน้าจัดการผู้ใช้ (Phase 2, `/admin/users`) — โปรโมท user ธรรมดาเป็น admin ได้ผ่าน UI (นอกเหนือสเปก Section 4 เดิม ผู้ใช้ขอเพิ่มเพื่อไม่ให้มีทางสมัคร admin ตรงได้เลย)
 - `src/lib/supabase/database.types.ts` เขียนด้วยมือให้ตรง schema (ไม่ได้ auto-generate) เพราะเครื่องไม่มี Docker ให้ `supabase gen types --db-url` ใช้ — ต้องมี Supabase access token (`SUPABASE_ACCESS_TOKEN`) ก่อนจึงจะ auto-gen ผ่าน Management API ได้ (`npm run gen:types`)
 
-**บัญชีทดสอบที่มีอยู่**: admin `admin@zenityx.com` / `Admin@Zenity2026` · buyer `buyer1@test.com`, `buyer2@test.com` · seller `seller1@test.com` (ร้าน "ร้านทดสอบเฟส 3") — ทั้งหมดรหัส `Test1234!`
+**บัญชีทดสอบที่มีอยู่**: เคลียร์ข้อมูลทดสอบทั้งหมดแล้ว (2026-07-15) เหลือเฉพาะ admin `aekkarat@zenityx.com` บัญชีเดียว — ตาราง business ทั้งหมด (profiles/shops/products/orders/addresses/ฯลฯ) ว่างเปล่า มีแค่ `categories` (6 หมวดจาก seed) ที่ยังอยู่ · ไฟล์ใน Storage buckets (products/shops/payment-slips/seller-documents) ที่เคยอัปโหลดไว้ก่อนหน้ายังไม่ถูกลบ (ต้องขอสิทธิ์แยกหากต้องการเคลียร์ด้วย)
 
 ## 1. Tech Stack
 
