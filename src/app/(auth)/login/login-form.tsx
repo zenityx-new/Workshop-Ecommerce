@@ -28,6 +28,9 @@ export function LoginForm({
   banned: boolean;
 }) {
   const [state, formAction] = useActionState(login, initial);
+  const registerHref = redirectTo
+    ? `/register?redirect=${encodeURIComponent(redirectTo)}`
+    : "/register";
 
   return (
     <Card>
@@ -87,10 +90,7 @@ export function LoginForm({
           </SubmitButton>
           <p className="text-center text-sm text-muted-foreground">
             ยังไม่มีบัญชี?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
+            <Link href={registerHref} className="font-medium text-primary hover:underline">
               สมัครสมาชิก
             </Link>
           </p>

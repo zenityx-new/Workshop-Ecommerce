@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserRound, Store, Package, LogOut } from "lucide-react";
+import { UserRound, Store, Package, MapPin, LogOut } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
 import {
@@ -75,11 +75,26 @@ export default async function AccountPage() {
                 <Package className="size-5 text-primary" aria-hidden />
                 คำสั่งซื้อของฉัน
               </CardTitle>
-              <CardDescription>ติดตามสถานะคำสั่งซื้อ (เร็ว ๆ นี้)</CardDescription>
+              <CardDescription>ติดตามสถานะคำสั่งซื้อ</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" size="sm" disabled>
-                ยังไม่เปิดใช้งาน
+              <Button asChild variant="outline" size="sm">
+                <Link href="/account/orders">ดูคำสั่งซื้อ</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MapPin className="size-5 text-primary" aria-hidden />
+                สมุดที่อยู่
+              </CardTitle>
+              <CardDescription>จัดการที่อยู่จัดส่งสินค้า</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/account/addresses">จัดการที่อยู่</Link>
               </Button>
             </CardContent>
           </Card>

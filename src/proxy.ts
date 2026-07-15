@@ -18,6 +18,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isGuarded =
     path.startsWith("/account") ||
+    path.startsWith("/checkout") ||
     path.startsWith("/seller") ||
     path.startsWith("/admin");
 

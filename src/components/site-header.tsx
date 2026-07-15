@@ -6,13 +6,33 @@ import {
   LayoutDashboard,
   ShieldCheck,
   LogOut,
+  Heart,
 } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { CartBadge } from "@/components/cart-badge";
 
 export async function SiteHeader() {
   const { user, profile } = await getSessionUser();
+
+  let dbCartCount = 0;
+  if (user) {
+    const supabase = await createClient();
+    const { data: cart } = await supabase
+      .from("carts")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (cart) {
+      const { data: items } = await supabase
+        .from("cart_items")
+        .select("quantity")
+        .eq("cart_id", cart.id);
+      dbCartCount = (items ?? []).reduce((sum, i) => sum + i.quantity, 0);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
@@ -23,9 +43,17 @@ export async function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-1.5 text-sm">
-          <Button asChild variant="ghost" size="icon" aria-label="ตะกร้าสินค้า">
+          {user && (
+            <Button asChild variant="ghost" size="icon" aria-label="รายการโปรด">
+              <Link href="/wishlist">
+                <Heart aria-hidden />
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant="ghost" size="icon" aria-label="ตะกร้าสินค้า" className="relative">
             <Link href="/cart">
               <ShoppingCart aria-hidden />
+              <CartBadge dbCount={dbCartCount} isLoggedIn={!!user} />
             </Link>
           </Button>
 

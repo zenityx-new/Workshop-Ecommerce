@@ -9,25 +9,9 @@ import { Button } from "@/components/ui/button";
 import { updateCartItemQuantity, removeCartItem, getGuestCartLines } from "@/lib/actions/cart";
 import { useCartStore } from "@/stores/cart-store";
 import { formatTHB } from "@/lib/format";
+import type { CartLine, ShopCartGroup } from "@/lib/cart-types";
 
-export type CartLine = {
-  cartItemId?: string;
-  variantId: string;
-  variantName: string;
-  productId: string;
-  productName: string;
-  productImage: string | null;
-  price: number;
-  stock: number;
-  quantity: number;
-};
-
-export type ShopCartGroup = {
-  shopId: string;
-  shopName: string;
-  shopSlug: string;
-  lines: CartLine[];
-};
+export type { CartLine, ShopCartGroup };
 
 function EmptyCart() {
   return (
@@ -169,8 +153,8 @@ function CartSummary({ groups }: { groups: ShopCartGroup[] }) {
           <span>ยอดรวมทั้งหมด</span>
           <span className="text-primary">{formatTHB(total)}</span>
         </div>
-        <Button className="w-full" size="lg" disabled title="เปิดใช้งานในเฟสถัดไป">
-          ไปชำระเงิน (เร็ว ๆ นี้)
+        <Button asChild className="w-full" size="lg">
+          <Link href="/checkout">ไปชำระเงิน</Link>
         </Button>
       </CardContent>
     </Card>

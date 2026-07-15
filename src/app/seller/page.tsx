@@ -118,11 +118,11 @@ export default async function SellerDashboardPage() {
               <ShoppingBag className="size-5 text-primary" aria-hidden />
               คำสั่งซื้อ
             </CardTitle>
-            <CardDescription>จัดการออเดอร์ของร้าน (เร็ว ๆ นี้)</CardDescription>
+            <CardDescription>จัดการออเดอร์ของร้าน</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" size="sm" disabled>
-              ยังไม่เปิดใช้งาน
+            <Button asChild variant="outline" size="sm">
+              <Link href="/seller/orders">จัดการคำสั่งซื้อ</Link>
             </Button>
           </CardContent>
         </Card>

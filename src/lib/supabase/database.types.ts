@@ -938,6 +938,38 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: undefined;
       };
+      place_order: {
+        Args: {
+          p_address_id: string;
+          p_payment_method: Database["public"]["Enums"]["payment_method"];
+        };
+        Returns: { checkout_group_id: string; order_ids: string[] }[];
+      };
+      cancel_order: {
+        Args: { p_order_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      update_order_status: {
+        Args: {
+          p_order_id: string;
+          p_new_status: Database["public"]["Enums"]["order_status"];
+          p_carrier?: string | null;
+          p_tracking_no?: string | null;
+        };
+        Returns: undefined;
+      };
+      confirm_order_received: {
+        Args: { p_order_id: string };
+        Returns: undefined;
+      };
+      submit_payment_slip: {
+        Args: { p_order_id: string; p_slip_path: string };
+        Returns: undefined;
+      };
+      verify_payment_slip: {
+        Args: { p_order_id: string; p_approve: boolean; p_reason?: string | null };
+        Returns: undefined;
+      };
     };
     Enums: {
       user_role: "buyer" | "seller" | "admin";

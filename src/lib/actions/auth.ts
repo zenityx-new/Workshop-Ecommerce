@@ -60,7 +60,8 @@ export async function registerBuyer(
     };
   }
 
-  redirect("/account");
+  const target = safeRedirectPath(formData.get("redirect"));
+  redirect(target ?? "/account");
 }
 
 export async function login(
