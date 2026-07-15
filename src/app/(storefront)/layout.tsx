@@ -1,12 +1,17 @@
 import { SiteHeader } from "@/components/site-header";
+import { CartMergeSync } from "@/components/cart-merge-sync";
+import { getSessionUser } from "@/lib/auth";
 
-export default function StorefrontLayout({
+export default async function StorefrontLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = await getSessionUser();
+
   return (
     <>
+      <CartMergeSync isLoggedIn={!!user} />
       <SiteHeader />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
         {children}

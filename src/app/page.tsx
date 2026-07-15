@@ -14,7 +14,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { SiteHeader } from "@/components/site-header";
+import { CartMergeSync } from "@/components/cart-merge-sync";
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   clothing: Shirt,
@@ -27,6 +29,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
 
 export default async function HomePage() {
   const supabase = await createClient();
+  const { user } = await getSessionUser();
   const { data: categories } = await supabase
     .from("categories")
     .select("id, name, slug")
@@ -34,6 +37,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <CartMergeSync isLoggedIn={!!user} />
       <SiteHeader />
       <main className="flex-1">
         {/* Hero */}
