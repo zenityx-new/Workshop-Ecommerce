@@ -72,7 +72,13 @@ export function BrandingPicker({
     <div>
       <Label>{label}</Label>
       <div className="relative mb-14 mt-2 sm:mb-16">
-        <div className="relative h-36 w-full overflow-hidden rounded-xl border bg-muted sm:h-44">
+        {/* Whole banner is clickable (not just the camera badge). */}
+        <button
+          type="button"
+          onClick={() => secondaryInputRef.current?.click()}
+          aria-label={`เปลี่ยน${secondaryAlt}`}
+          className="group relative block h-36 w-full overflow-hidden rounded-xl border bg-muted sm:h-44"
+        >
           {secondaryPreview ? (
             <Image
               src={secondaryPreview}
@@ -87,15 +93,10 @@ export function BrandingPicker({
               <ImagePlus className="size-8" aria-hidden />
             </div>
           )}
-          <button
-            type="button"
-            onClick={() => secondaryInputRef.current?.click()}
-            aria-label={`เปลี่ยน${secondaryAlt}`}
-            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/75"
-          >
+          <span className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/60 text-white transition-colors group-hover:bg-black/75">
             <Camera className="size-4" aria-hidden />
-          </button>
-        </div>
+          </span>
+        </button>
 
         <button
           type="button"
