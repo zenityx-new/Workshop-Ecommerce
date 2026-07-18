@@ -1,12 +1,19 @@
 "use client";
 
-import { Store, Phone, MapPin, CreditCard, FileText, Check, Clock } from "lucide-react";
+import { Store, Phone, MapPin, CreditCard, Check, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { DocumentViewer } from "@/components/document-viewer";
 import { RejectApplicationDialog } from "./reject-application-dialog";
 import { approveSellerApplication } from "@/lib/actions/admin";
 import { formatDateTime } from "@/lib/format";
 import type { Tables } from "@/lib/supabase/database.types";
+
+/** Stored doc paths end in the original extension — PDFs embed, everything
+ *  else is treated as an image. */
+function docKind(path: string | null): "image" | "pdf" {
+  return path?.toLowerCase().endsWith(".pdf") ? "pdf" : "image";
+}
 
 export function SellerApplicationRow({
   application,
@@ -43,26 +50,18 @@ export function SellerApplicationRow({
           </div>
           <div className="flex flex-wrap gap-4 pt-1 text-sm">
             {idCardUrl && (
-              <a
-                href={idCardUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-primary hover:underline"
-              >
-                <FileText className="size-4" aria-hidden />
-                ดูรูปบัตรประชาชน
-              </a>
+              <DocumentViewer
+                url={idCardUrl}
+                label="ดูรูปบัตรประชาชน"
+                kind={docKind(application.id_card_url)}
+              />
             )}
             {extraDocUrl && (
-              <a
-                href={extraDocUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-primary hover:underline"
-              >
-                <FileText className="size-4" aria-hidden />
-                เอกสารเพิ่มเติม
-              </a>
+              <DocumentViewer
+                url={extraDocUrl}
+                label="เอกสารเพิ่มเติม"
+                kind={docKind(application.extra_doc_url)}
+              />
             )}
           </div>
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

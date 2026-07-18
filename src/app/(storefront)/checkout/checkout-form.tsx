@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Truck, QrCode, Loader2 } from "lucide-react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { AlertCircle, MapPin, Truck, QrCode, Loader2, Ticket, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -13,12 +13,15 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AddressFormDialog } from "@/app/(storefront)/account/addresses/address-form-dialog";
-import { placeOrder } from "@/lib/actions/checkout";
+import { placeOrder, previewCoupon } from "@/lib/actions/checkout";
 import { formatTHB } from "@/lib/format";
 import type { ActionState } from "@/lib/actions/auth";
 import type { Tables } from "@/lib/supabase/database.types";
 import type { ShopCartGroup } from "@/lib/cart-types";
+
+type AppliedCoupon = { code: string; discount: number };
 
 const initial: ActionState = {};
 
@@ -43,6 +46,12 @@ export function CheckoutForm({
   const [selectedAddressId, setSelectedAddressId] = useState(defaultAddress?.id ?? "");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "promptpay">("cod");
 
+  const [couponInputs, setCouponInputs] = useState<Record<string, string>>({});
+  const [appliedCoupons, setAppliedCoupons] = useState<Record<string, AppliedCoupon>>({});
+  const [couponErrors, setCouponErrors] = useState<Record<string, string>>({});
+  const [couponPending, startCouponTransition] = useTransition();
+  const [pendingShopId, setPendingShopId] = useState<string | null>(null);
+
   // Address list can go from empty -> populated (buyer adds their first address
   // right here on the checkout page) — pick up the new default once it exists.
   useEffect(() => {
@@ -52,10 +61,42 @@ export function CheckoutForm({
   }, [defaultAddress, selectedAddressId]);
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
-  const grandTotal = groups.reduce(
-    (sum, g) => sum + g.lines.reduce((s, l) => s + l.price * l.quantity, 0),
-    0,
-  );
+
+  function shopSubtotal(group: ShopCartGroup) {
+    return group.lines.reduce((s, l) => s + l.price * l.quantity, 0);
+  }
+
+  function handleApplyCoupon(shopId: string, subtotal: number) {
+    const code = (couponInputs[shopId] ?? "").trim();
+    setCouponErrors((e) => ({ ...e, [shopId]: "" }));
+    setPendingShopId(shopId);
+    startCouponTransition(async () => {
+      const result = await previewCoupon(shopId, code, subtotal);
+      if ("error" in result) {
+        setCouponErrors((e) => ({ ...e, [shopId]: result.error }));
+      } else {
+        setAppliedCoupons((c) => ({ ...c, [shopId]: { code: code.toUpperCase(), discount: result.discount } }));
+      }
+      setPendingShopId(null);
+    });
+  }
+
+  function handleRemoveCoupon(shopId: string) {
+    setAppliedCoupons((c) => {
+      const next = { ...c };
+      delete next[shopId];
+      return next;
+    });
+    setCouponInputs((c) => ({ ...c, [shopId]: "" }));
+    setCouponErrors((e) => ({ ...e, [shopId]: "" }));
+  }
+
+  const grandTotal = groups.reduce((sum, g) => {
+    const subtotal = shopSubtotal(g);
+    const discount = appliedCoupons[g.shopId]?.discount ?? 0;
+    return sum + Math.max(subtotal - discount, 0);
+  }, 0);
+  const totalDiscount = groups.reduce((sum, g) => sum + (appliedCoupons[g.shopId]?.discount ?? 0), 0);
 
   function handleReviewClick() {
     if (formRef.current && !formRef.current.reportValidity()) return;
@@ -158,7 +199,10 @@ export function CheckoutForm({
 
         <div className="space-y-3">
           {groups.map((group) => {
-            const subtotal = group.lines.reduce((s, l) => s + l.price * l.quantity, 0);
+            const subtotal = shopSubtotal(group);
+            const applied = appliedCoupons[group.shopId];
+            const couponError = couponErrors[group.shopId];
+            const isApplying = couponPending && pendingShopId === group.shopId;
             return (
               <Card key={group.shopId}>
                 <CardHeader>
@@ -175,20 +219,86 @@ export function CheckoutForm({
                       <span>{formatTHB(line.price * line.quantity)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between border-t pt-2 text-sm font-medium">
-                    <span>ยอดรวมร้านนี้</span>
-                    <span>{formatTHB(subtotal)}</span>
+
+                  <div className="border-t pt-2">
+                    {applied ? (
+                      <div className="flex items-center justify-between rounded-md bg-success/10 px-3 py-2 text-sm text-success">
+                        <span className="flex items-center gap-1.5">
+                          <Ticket className="size-4" aria-hidden />
+                          ใช้คูปอง {applied.code} · ลด {formatTHB(applied.discount)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCoupon(group.shopId)}
+                          aria-label="ยกเลิกคูปอง"
+                          className="text-success hover:opacity-70"
+                        >
+                          <X className="size-4" aria-hidden />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          value={couponInputs[group.shopId] ?? ""}
+                          onChange={(e) =>
+                            setCouponInputs((c) => ({ ...c, [group.shopId]: e.target.value }))
+                          }
+                          placeholder="รหัสคูปอง (ไม่บังคับ)"
+                          className="h-9 flex-1 uppercase"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isApplying || !(couponInputs[group.shopId] ?? "").trim()}
+                          onClick={() => handleApplyCoupon(group.shopId, subtotal)}
+                        >
+                          {isApplying ? <Loader2 className="animate-spin" aria-hidden /> : "ใช้คูปอง"}
+                        </Button>
+                      </div>
+                    )}
+                    {couponError && <p className="mt-1 text-xs text-destructive">{couponError}</p>}
+                  </div>
+
+                  <div className="space-y-1 border-t pt-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>ยอดรวมร้านนี้</span>
+                      <span>{formatTHB(subtotal)}</span>
+                    </div>
+                    {applied && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>ส่วนลด</span>
+                        <span>-{formatTHB(applied.discount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-medium">
+                      <span>ยอดสุทธิร้านนี้</span>
+                      <span>{formatTHB(Math.max(subtotal - (applied?.discount ?? 0), 0))}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
+
+        {Object.entries(appliedCoupons).map(([shopId, c]) => (
+          <span key={shopId}>
+            <input type="hidden" name="coupon_shop_id" value={shopId} />
+            <input type="hidden" name="coupon_code" value={c.code} />
+          </span>
+        ))}
       </div>
 
       <div>
         <Card className="sticky top-20">
           <CardContent className="space-y-4 p-4">
+            {totalDiscount > 0 && (
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>ส่วนลดรวม</span>
+                <span>-{formatTHB(totalDiscount)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between text-lg font-semibold">
               <span>ยอดรวมทั้งหมด</span>
               <span className="text-primary">{formatTHB(grandTotal)}</span>

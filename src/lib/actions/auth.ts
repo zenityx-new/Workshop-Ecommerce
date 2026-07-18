@@ -15,6 +15,7 @@ export type ActionState = {
   notice?: string;
   fieldErrors?: Record<string, string[] | undefined>;
   success?: boolean;
+  redirectTo?: string;
 };
 
 function safeRedirectPath(input: FormDataEntryValue | null): string | null {
@@ -84,7 +85,7 @@ export async function login(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, status")
+    .select("role, status, full_name")
     .eq("id", data.user.id)
     .single();
 
@@ -94,20 +95,32 @@ export async function login(
   }
 
   const target = safeRedirectPath(formData.get("redirect"));
-  if (target) redirect(target);
-  redirect(
-    profile?.role === "admin"
-      ? "/admin"
-      : profile?.role === "seller"
-        ? "/seller"
-        : "/",
-  );
+  const destination =
+    target ?? (profile?.role === "admin" ? "/admin" : profile?.role === "seller" ? "/seller" : "/");
+
+  return {
+    success: true,
+    notice: profile?.full_name ? `ยินดีต้อนรับกลับ, ${profile.full_name}` : "ยินดีต้อนรับกลับ",
+    redirectTo: destination,
+  };
 }
 
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
+function extFor(file: File): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  return map[file.type] ?? "bin";
 }
 
 export async function updateProfile(
@@ -124,11 +137,54 @@ export async function updateProfile(
   }
 
   const supabase = await createClient();
+
+  const { data: current } = await supabase
+    .from("profiles")
+    .select("avatar_url, banner_url")
+    .eq("id", user!.id)
+    .single();
+
+  let avatarPath = current?.avatar_url ?? null;
+  const avatar = formData.get("avatar");
+  if (avatar instanceof File && avatar.size > 0) {
+    if (!IMAGE_TYPES.includes(avatar.type)) {
+      return { error: "รูปโปรไฟล์ต้องเป็นไฟล์ JPG, PNG หรือ WebP เท่านั้น" };
+    }
+    if (avatar.size > MAX_IMAGE_BYTES) {
+      return { error: "รูปโปรไฟล์ต้องมีขนาดไม่เกิน 10 MB" };
+    }
+    const path = `${user!.id}/avatar-${Date.now()}.${extFor(avatar)}`;
+    const { error: upErr } = await supabase.storage
+      .from("avatars")
+      .upload(path, avatar, { contentType: avatar.type, upsert: true });
+    if (upErr) return { error: "อัปโหลดรูปโปรไฟล์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" };
+    avatarPath = path;
+  }
+
+  let bannerPath = current?.banner_url ?? null;
+  const banner = formData.get("banner");
+  if (banner instanceof File && banner.size > 0) {
+    if (!IMAGE_TYPES.includes(banner.type)) {
+      return { error: "ภาพปกต้องเป็นไฟล์ JPG, PNG หรือ WebP เท่านั้น" };
+    }
+    if (banner.size > MAX_IMAGE_BYTES) {
+      return { error: "ภาพปกต้องมีขนาดไม่เกิน 10 MB" };
+    }
+    const path = `${user!.id}/banner-${Date.now()}.${extFor(banner)}`;
+    const { error: upErr } = await supabase.storage
+      .from("avatars")
+      .upload(path, banner, { contentType: banner.type, upsert: true });
+    if (upErr) return { error: "อัปโหลดภาพปกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" };
+    bannerPath = path;
+  }
+
   const { error } = await supabase
     .from("profiles")
     .update({
       full_name: parsed.data.full_name,
       phone: parsed.data.phone || null,
+      avatar_url: avatarPath,
+      banner_url: bannerPath,
     })
     .eq("id", user!.id);
 

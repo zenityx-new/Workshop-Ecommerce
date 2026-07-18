@@ -15,12 +15,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
+import { SubmittedSuccessModal } from "./submitted-success-modal";
 
 export const metadata = { title: "สถานะการสมัครผู้ขาย" };
 
-export default async function SellerPendingPage() {
+export default async function SellerPendingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ submitted?: string }>;
+}) {
   const { user, profile } = await requireUser();
   if (profile.role === "seller") redirect("/seller");
+  if (profile.role === "admin") redirect("/admin");
+
+  const { submitted } = await searchParams;
 
   const supabase = await createClient();
   const { data: app } = await supabase
@@ -55,6 +63,7 @@ export default async function SellerPendingPage() {
 
   return (
     <div className="mx-auto max-w-lg">
+      <SubmittedSuccessModal show={submitted === "1"} />
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

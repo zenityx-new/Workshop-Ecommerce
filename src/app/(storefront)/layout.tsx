@@ -7,11 +7,12 @@ export default async function StorefrontLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await getSessionUser();
+  const { user, profile } = await getSessionUser();
+  const isRestricted = profile?.role === "admin" || profile?.role === "seller";
 
   return (
     <>
-      <CartMergeSync isLoggedIn={!!user} />
+      <CartMergeSync isLoggedIn={!!user && !isRestricted} />
       <SiteHeader />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
         {children}

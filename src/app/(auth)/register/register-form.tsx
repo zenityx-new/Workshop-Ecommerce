@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { registerBuyer, type ActionState } from "@/lib/actions/auth";
 import {
   Card,
@@ -17,14 +17,20 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/submit-button";
 import { FieldError } from "@/components/field-error";
+import { SuccessModal } from "@/components/success-modal";
 
 const initial: ActionState = {};
 
 export function RegisterForm({ redirectTo }: { redirectTo: string }) {
   const [state, formAction] = useActionState(registerBuyer, initial);
+  const [showNotice, setShowNotice] = useState(false);
   const loginHref = redirectTo
     ? `/login?redirect=${encodeURIComponent(redirectTo)}`
     : "/login";
+
+  useEffect(() => {
+    if (state.notice) setShowNotice(true);
+  }, [state]);
 
   return (
     <Card>
@@ -40,12 +46,14 @@ export function RegisterForm({ redirectTo }: { redirectTo: string }) {
               <AlertDescription>{state.error}</AlertDescription>
             </Alert>
           )}
-          {state.notice && (
-            <Alert variant="success">
-              <CheckCircle2 aria-hidden />
-              <AlertDescription>{state.notice}</AlertDescription>
-            </Alert>
-          )}
+
+          <SuccessModal
+            open={showNotice}
+            onOpenChange={setShowNotice}
+            title="สมัครสมาชิกสำเร็จ"
+            description={state.notice}
+            autoCloseMs={4000}
+          />
 
           <input type="hidden" name="redirect" value={redirectTo} />
 

@@ -1,13 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
+import { AlertCircle } from "lucide-react";
 import { updateProfile, type ActionState } from "@/lib/actions/auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/submit-button";
 import { FieldError } from "@/components/field-error";
+import { BrandingPicker } from "@/components/branding-picker";
+import { SuccessModal } from "@/components/success-modal";
 
 const initial: ActionState = {};
 
@@ -15,12 +17,21 @@ export function ProfileForm({
   email,
   fullName,
   phone,
+  avatarUrl,
+  bannerUrl,
 }: {
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl: string | null;
+  bannerUrl: string | null;
 }) {
   const [state, formAction] = useActionState(updateProfile, initial);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    if (state.success) setShowSuccess(true);
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -30,12 +41,23 @@ export function ProfileForm({
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
-      {state.success && state.notice && (
-        <Alert variant="success">
-          <CheckCircle2 aria-hidden />
-          <AlertDescription>{state.notice}</AlertDescription>
-        </Alert>
-      )}
+
+      <SuccessModal
+        open={showSuccess}
+        onOpenChange={setShowSuccess}
+        title="บันทึกข้อมูลสำเร็จ"
+        description={state.notice}
+      />
+
+      <BrandingPicker
+        label="รูปโปรไฟล์"
+        primaryFieldName="avatar"
+        primaryUrl={avatarUrl}
+        primaryAlt="รูปโปรไฟล์"
+        secondaryFieldName="banner"
+        secondaryUrl={bannerUrl}
+        secondaryAlt="ภาพปก"
+      />
 
       <div>
         <Label htmlFor="email">อีเมล</Label>

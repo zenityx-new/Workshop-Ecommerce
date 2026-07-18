@@ -25,6 +25,7 @@ export type Database = {
           full_name: string | null;
           phone: string | null;
           avatar_url: string | null;
+          banner_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -36,6 +37,7 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -47,6 +49,7 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -942,8 +945,26 @@ export type Database = {
         Args: {
           p_address_id: string;
           p_payment_method: Database["public"]["Enums"]["payment_method"];
+          p_coupons?: Json;
         };
         Returns: { checkout_group_id: string; order_ids: string[] }[];
+      };
+      validate_coupon: {
+        Args: { p_shop_id: string; p_code: string; p_subtotal: number };
+        Returns: { coupon_id: string; discount: number }[];
+      };
+      submit_review: {
+        Args: {
+          p_order_item_id: string;
+          p_rating: number;
+          p_comment: string | null;
+          p_image_urls?: string[];
+        };
+        Returns: string;
+      };
+      reply_to_review: {
+        Args: { p_review_id: string; p_reply: string };
+        Returns: undefined;
       };
       cancel_order: {
         Args: { p_order_id: string; p_reason: string };

@@ -8,6 +8,8 @@ const LINKS = [
   { href: "/seller", label: "แดชบอร์ด" },
   { href: "/seller/products", label: "สินค้า" },
   { href: "/seller/orders", label: "คำสั่งซื้อ" },
+  { href: "/seller/promotions", label: "โปรโมชั่น" },
+  { href: "/seller/reviews", label: "รีวิว" },
   { href: "/seller/shop-settings", label: "ตั้งค่าร้านค้า" },
 ];
 

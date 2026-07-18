@@ -5,20 +5,22 @@ import {
   UserRound,
   LayoutDashboard,
   ShieldCheck,
-  LogOut,
   Heart,
 } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
-import { logout } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/cart-badge";
+import { LogoutButton } from "@/components/logout-button";
 
 export async function SiteHeader() {
   const { user, profile } = await getSessionUser();
+  const isAdmin = profile?.role === "admin";
+  const isSeller = profile?.role === "seller";
+  const isRestricted = isAdmin || isSeller;
 
   let dbCartCount = 0;
-  if (user) {
+  if (user && !isRestricted) {
     const supabase = await createClient();
     const { data: cart } = await supabase
       .from("carts")
@@ -37,25 +39,32 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <Link
+          href={isAdmin ? "/admin" : isSeller ? "/seller" : "/"}
+          className="flex items-center gap-2 font-semibold"
+        >
           <Store className="size-6 text-primary" aria-hidden />
           <span className="text-lg">ตลาดออนไลน์</span>
         </Link>
 
         <nav className="flex items-center gap-1.5 text-sm">
-          {user && (
-            <Button asChild variant="ghost" size="icon" aria-label="รายการโปรด">
-              <Link href="/wishlist">
-                <Heart aria-hidden />
-              </Link>
-            </Button>
+          {!isRestricted && (
+            <>
+              {user && (
+                <Button asChild variant="ghost" size="icon" aria-label="รายการโปรด">
+                  <Link href="/wishlist">
+                    <Heart aria-hidden />
+                  </Link>
+                </Button>
+              )}
+              <Button asChild variant="ghost" size="icon" aria-label="ตะกร้าสินค้า" className="relative">
+                <Link href="/cart">
+                  <ShoppingCart aria-hidden />
+                  <CartBadge dbCount={dbCartCount} isLoggedIn={!!user} />
+                </Link>
+              </Button>
+            </>
           )}
-          <Button asChild variant="ghost" size="icon" aria-label="ตะกร้าสินค้า" className="relative">
-            <Link href="/cart">
-              <ShoppingCart aria-hidden />
-              <CartBadge dbCount={dbCartCount} isLoggedIn={!!user} />
-            </Link>
-          </Button>
 
           {user ? (
             <>
@@ -81,16 +90,7 @@ export async function SiteHeader() {
                   บัญชี
                 </Link>
               </Button>
-              <form action={logout}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="ออกจากระบบ"
-                >
-                  <LogOut aria-hidden />
-                </Button>
-              </form>
+              <LogoutButton variant="ghost" iconOnly />
             </>
           ) : (
             <>

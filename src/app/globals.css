@@ -118,3 +118,60 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* =====================================================================
+   Dialog/modal entrance + exit animation (Radix keeps [data-state=closed]
+   mounted for the duration of a detected CSS animation before unmounting,
+   so this animates BOTH open and close for every Dialog in the app).
+
+   Written as plain CSS (not Tailwind's `animate-[...]` arbitrary-value
+   syntax) on purpose: the build (Turbopack/Lightning CSS) was tree-shaking
+   @keyframes blocks that were only ever referenced from inside a generated
+   Tailwind utility class string, since nothing in the same plain-CSS scope
+   visibly used them. The `animation` property below and its @keyframes are
+   in the same block, so no minifier can treat the keyframes as dead code.
+   `pointer-events: none` on the closed state is required, not cosmetic —
+   without it, a dialog that fails to unmount promptly for any reason stays
+   a full-viewport (or centered) click-blocking layer over the whole page.
+   ===================================================================== */
+@keyframes dialog-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dialog-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+/* Only `scale` is animated here — centering is handled by Tailwind's
+   `-translate-x-1/2 -translate-y-1/2` utilities, which compile to the
+   standalone CSS `translate` property in Tailwind v4. That property
+   composes ADDITIVELY with `transform`, so if these keyframes also put
+   `translate(-50%, -50%)` in `transform`, the two stack into a -100%/-100%
+   shift and every dialog renders off-center toward the top-left. */
+@keyframes dialog-content-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes dialog-content-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+.dialog-overlay[data-state="open"] {
+  animation: dialog-overlay-in 0.15s ease-out forwards;
+}
+.dialog-overlay[data-state="closed"] {
+  animation: dialog-overlay-out 0.15s ease-in forwards;
+  /* Radix sets `style="pointer-events: auto"` inline on this element, which
+     beats any normal stylesheet rule — !important is required to actually
+     stop a closing/closed overlay from swallowing clicks on the rest of
+     the page. */
+  pointer-events: none !important;
+}
+.dialog-content[data-state="open"] {
+  animation: dialog-content-in 0.2s ease-out forwards;
+}
+.dialog-content[data-state="closed"] {
+  animation: dialog-content-out 0.15s ease-in forwards;
+  pointer-events: none !important;
+}

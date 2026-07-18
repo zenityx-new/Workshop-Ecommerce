@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Store, MapPin, Truck, PackageCheck } from "lucide-react";
+import { ArrowLeft, Store, MapPin, Truck, PackageCheck, Star } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { generatePromptPayQr } from "@/lib/promptpay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { CancelOrderDialog } from "@/components/cancel-order-dialog";
@@ -12,6 +13,7 @@ import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { confirmOrderReceived } from "@/lib/actions/orders";
 import { formatTHB, formatDateTime } from "@/lib/format";
 import { PaymentSlipPanel } from "./payment-slip-panel";
+import { ReviewDialog } from "./review-dialog";
 
 export const metadata = { title: "รายละเอียดคำสั่งซื้อ" };
 
@@ -51,6 +53,15 @@ export default async function OrderDetailPage({
       .order("created_at", { ascending: true }),
     supabase.from("payments").select("*").eq("order_id", id).maybeSingle(),
   ]);
+
+  const itemIds = (items ?? []).map((i) => i.id);
+  const { data: reviews } = itemIds.length
+    ? await supabase
+        .from("reviews")
+        .select("id, order_item_id, rating, comment, seller_reply")
+        .in("order_item_id", itemIds)
+    : { data: [] as { id: string; order_item_id: string; rating: number; comment: string | null; seller_reply: string | null }[] };
+  const reviewByItem = new Map((reviews ?? []).map((r) => [r.order_item_id, r]));
 
   const needsPayment =
     order.payment_method === "promptpay" &&
@@ -92,20 +103,57 @@ export default async function OrderDetailPage({
               </CardTitle>
             </CardHeader>
             <CardContent className="divide-y">
-              {(items ?? []).map((item) => (
-                <div key={item.id} className="flex items-center justify-between py-3 text-sm">
-                  <div>
-                    <p className="font-medium">{item.product_name}</p>
-                    {item.variant_name !== "default" && (
-                      <p className="text-muted-foreground">ไซส์ {item.variant_name}</p>
+              {(items ?? []).map((item) => {
+                const review = reviewByItem.get(item.id);
+                return (
+                  <div key={item.id} className="space-y-2 py-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{item.product_name}</p>
+                        {item.variant_name !== "default" && (
+                          <p className="text-muted-foreground">ไซส์ {item.variant_name}</p>
+                        )}
+                        <p className="text-muted-foreground">
+                          {formatTHB(item.unit_price)} × {item.quantity}
+                        </p>
+                      </div>
+                      <span className="font-medium">{formatTHB(item.line_total)}</span>
+                    </div>
+
+                    {order.status === "completed" && (
+                      <div>
+                        {review ? (
+                          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="success">
+                                <Star className="fill-current" aria-hidden />
+                                รีวิวแล้ว {review.rating} ดาว
+                              </Badge>
+                            </div>
+                            {review.comment && (
+                              <p className="mt-1.5 text-muted-foreground">{review.comment}</p>
+                            )}
+                            {review.seller_reply && (
+                              <div className="mt-2 rounded-md bg-background p-2">
+                                <p className="text-xs font-medium text-primary">
+                                  ร้านค้าตอบกลับ
+                                </p>
+                                <p className="text-muted-foreground">{review.seller_reply}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <ReviewDialog
+                            orderId={order.id}
+                            orderItemId={item.id}
+                            productName={item.product_name}
+                          />
+                        )}
+                      </div>
                     )}
-                    <p className="text-muted-foreground">
-                      {formatTHB(item.unit_price)} × {item.quantity}
-                    </p>
                   </div>
-                  <span className="font-medium">{formatTHB(item.line_total)}</span>
-                </div>
-              ))}
+                );
+              })}
               <div className="space-y-1 pt-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>ยอดรวมสินค้า</span>

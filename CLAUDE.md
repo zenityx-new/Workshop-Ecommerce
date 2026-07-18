@@ -3,7 +3,7 @@
 ระบบร้านค้าออนไลน์แบบหลายผู้ขาย มี 3 role: **buyer / seller / admin**
 พัฒนาทีละ Phase ตาม Section 7 — จบแต่ละ Phase ให้หยุดรอผู้ใช้ทดสอบก่อนเสมอ
 
-## 0. สถานะปัจจุบัน (อัปเดตล่าสุด: 2026-07-15)
+## 0. สถานะปัจจุบัน (อัปเดตล่าสุด: 2026-07-18)
 
 | Phase | สถานะ | Commit |
 |---|---|---|
@@ -12,8 +12,9 @@
 | 2 — Admin: อนุมัติผู้ขาย & จัดการผู้ใช้ | ✅ เสร็จ | `e496839` |
 | 3 — Seller: ร้านค้า & สินค้า | ✅ เสร็จ (ทดสอบแล้ว) | — |
 | 4 — Storefront | ✅ เสร็จ | `e0169a8` |
-| 5 — Checkout & Orders | ⏳ พัฒนา+ทดสอบอัตโนมัติผ่านแล้ว รอผู้ใช้ทดสอบ | — |
-| 6-8 | ⬜ ยังไม่เริ่ม | — |
+| 5 — Checkout & Orders | ✅ เสร็จ (ทดสอบแล้ว) | `f3d6502` |
+| 6 — คูปอง & รีวิว | ✅ เสร็จ (ทดสอบ business-logic 19/19 ผ่าน 2026-07-18) | — |
+| 7-8 | ⬜ ยังไม่เริ่ม | — |
 
 **สิ่งที่เบี่ยงจากสเปกเดิม (อนุมัติโดยผู้ใช้ระหว่างทางแล้ว):**
 - ใช้ **Next.js 16** (ไม่ใช่ 15 ตาม Section 1) — `create-next-app@latest` ติดตั้ง 16 มาให้ และ `@opennextjs/cloudflare` รองรับ Next 16 อยู่แล้ว จึงใช้ต่อ (มากับ React 19 + Tailwind v4)
@@ -21,6 +22,10 @@
 - ใช้ **Supabase Cloud** ไม่ใช่ local (เครื่อง dev ไม่มี Docker) — migrations ยิงผ่าน `npm run db:apply` (psql ตรงไป cloud DB) แทน `supabase db reset`
 - เพิ่มฟีเจอร์ **"ตั้งเป็นผู้ดูแลระบบ"** ในหน้าจัดการผู้ใช้ (Phase 2, `/admin/users`) — โปรโมท user ธรรมดาเป็น admin ได้ผ่าน UI (นอกเหนือสเปก Section 4 เดิม ผู้ใช้ขอเพิ่มเพื่อไม่ให้มีทางสมัคร admin ตรงได้เลย)
 - `src/lib/supabase/database.types.ts` เขียนด้วยมือให้ตรง schema (ไม่ได้ auto-generate) เพราะเครื่องไม่มี Docker ให้ `supabase gen types --db-url` ใช้ — ต้องมี Supabase access token (`SUPABASE_ACCESS_TOKEN`) ก่อนจึงจะ auto-gen ผ่าน Management API ได้ (`npm run gen:types`)
+- **ผู้ดูแลระบบ (admin) และผู้ขาย (seller) ถูกล็อกไม่ให้ใช้ฝั่งซื้อของทั้งหมด** (2026-07-16, ผู้ใช้ระบุเพิ่มเติมหลัง Phase 6) — `/proxy.ts` บล็อก role admin ออกจากทุกหน้ายกเว้น `/admin/*` และ `/account`, บล็อก role seller ออกจากทุกหน้ายกเว้น `/seller/*` และ `/account` (ทั้งคู่ทำได้แค่จัดการงานของตัวเอง + โปรไฟล์ส่วนตัว ห้ามซื้อของ/checkout/ติดตามออเดอร์/จัดการที่อยู่); ตัดปุ่มร้านค้า(admin)/คำสั่งซื้อ/ที่อยู่ออกจากหน้า `/account` ตามสิทธิ์, ซ่อนไอคอนตะกร้า/รายการโปรดใน header, โลโก้เว็บลิงก์ไปหน้าหลักของ role นั้นแทน `/` — ดู [[feedback-admin-oversight-only]]
+- เพิ่มฟีเจอร์ **รูปโปรไฟล์ + ภาพปก** ให้ทุก role (2026-07-16, นอกสเปก Section 4/5 เดิม ผู้ใช้ขอเพิ่มแทนที่การ์ดที่ตัดออกจากหน้า admin) — คอลัมน์ `profiles.avatar_url` (มีอยู่แล้วตั้งแต่ Phase 0 แต่ไม่เคยต่อ UI) + `banner_url` (เพิ่มใหม่), bucket `avatars` (public), UI แบบเดียวกับโลโก้/แบนเนอร์ร้านค้า (component ร่วม `src/components/branding-picker.tsx`) ใช้ทั้งหน้า `/account` และ `/seller/shop-settings`
+- **แก้บั๊กสมัครผู้ขาย "กดส่งแล้วไม่มีอะไรเกิดขึ้น"** (2026-07-18) — ต้นเหตุคือการอัปโหลดไฟล์รูปบัตร: (1) ตรวจไฟล์จาก MIME เท่านั้น ทำให้ HEIC (รูปจาก iPhone) และไฟล์ที่มือถือส่ง `file.type` ว่างเปล่าถูกปฏิเสธเงียบๆ → เพิ่มการตรวจตามนามสกุลไฟล์เป็น fallback + ส่ง `contentType` ที่ถูกต้องตอน upload (`isAllowedDoc`/`contentTypeFor` ใน `src/lib/actions/seller.ts`); (2) bucket `seller-documents` มี `allowed_mime_types` ไม่รวม heic → migration `20260717100000_seller_docs_heic.sql` เพิ่ม image/heic,image/heif (ระวัง: Supabase Storage cache config ของ bucket แบบกระจายหลาย instance หลัง migrate ต้องรอ propagate สักครู่); (3) `accept` ของ input **ไม่ใส่ heic** เพื่อให้ iOS แปลง HEIC→JPEG อัตโนมัติ (แอดมินดูรูปได้ทุกเบราว์เซอร์); (4) error แสดง**เหนือปุ่มส่งด้วย** (เดิมอยู่บนสุดฟอร์มจนมองไม่เห็นบนมือถือ); (5) modal "ส่งใบสมัครสำเร็จ" เปลี่ยนเป็น**ค้างจนกดปุ่ม "รับทราบ"** ไม่ auto-close (เดิม 2.5 วิ เร็วจนพลาด) — `SuccessModal` รองรับ `autoCloseMs={0}` + `actionLabel` แล้ว ดู [[gotcha-storage-mime-and-heic-uploads]]
+- **หน้าแอดมินดูเอกสารผู้สมัครเป็น Modal** (2026-07-18, ผู้ใช้ขอ) — คลิก "ดูรูปบัตรประชาชน"/"เอกสารเพิ่มเติม" ใน `/admin/sellers/pending` แล้วเด้ง Modal แสดงรูป/ฝัง PDF ในหน้าเดิม (เดิมเปิดแท็บใหม่) — component ใหม่ `src/components/document-viewer.tsx` (แยก image/pdf ตามนามสกุล, มี fallback "เปิดในแท็บใหม่" + ข้อความเตือนเมื่อเบราว์เซอร์แสดง HEIC ไม่ได้)
 
 **บัญชีทดสอบที่มีอยู่**: เคลียร์ข้อมูลทดสอบทั้งหมดแล้ว (2026-07-15) เหลือเฉพาะ admin `aekkarat@zenityx.com` บัญชีเดียว — ตาราง business ทั้งหมด (profiles/shops/products/orders/addresses/ฯลฯ) ว่างเปล่า มีแค่ `categories` (6 หมวดจาก seed) ที่ยังอยู่ · ไฟล์ใน Storage buckets (products/shops/payment-slips/seller-documents) ที่เคยอัปโหลดไว้ก่อนหน้ายังไม่ถูกลบ (ต้องขอสิทธิ์แยกหากต้องการเคลียร์ด้วย)
 

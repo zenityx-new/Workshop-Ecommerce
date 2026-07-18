@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { login, type ActionState } from "@/lib/actions/auth";
@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/submit-button";
 import { FieldError } from "@/components/field-error";
+import { SuccessModal } from "@/components/success-modal";
 
 const initial: ActionState = {};
 
@@ -28,9 +29,21 @@ export function LoginForm({
   banned: boolean;
 }) {
   const [state, formAction] = useActionState(login, initial);
+  const [showWelcome, setShowWelcome] = useState(false);
   const registerHref = redirectTo
     ? `/register?redirect=${encodeURIComponent(redirectTo)}`
     : "/register";
+
+  useEffect(() => {
+    if (state.success) setShowWelcome(true);
+  }, [state]);
+
+  function handleWelcomeClose(open: boolean) {
+    setShowWelcome(open);
+    // Full navigation (not router.push) so every server component down the
+    // tree — including the header — re-renders with the new session's role.
+    if (!open && state.redirectTo) window.location.href = state.redirectTo;
+  }
 
   return (
     <Card>
@@ -40,6 +53,15 @@ export function LoginForm({
           ยินดีต้อนรับกลับ กรุณาเข้าสู่ระบบเพื่อใช้งาน
         </CardDescription>
       </CardHeader>
+
+      <SuccessModal
+        open={showWelcome}
+        onOpenChange={handleWelcomeClose}
+        title="เข้าสู่ระบบสำเร็จ"
+        description={state.notice}
+        autoCloseMs={1500}
+      />
+
       <form action={formAction}>
         <CardContent className="space-y-4">
           {(state.error || banned) && (

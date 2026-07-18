@@ -19,7 +19,11 @@ function DialogOverlay({
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
-      className={cn("fixed inset-0 z-50 bg-black/50", className)}
+      // Animation lives in globals.css as plain CSS (`.dialog-overlay[data-state=...]`),
+      // not Tailwind's `animate-[...]` arbitrary-value syntax — see the comment
+      // above those rules for why (the build was tree-shaking @keyframes only
+      // ever referenced from inside a generated utility class string).
+      className={cn("dialog-overlay fixed inset-0 z-50 bg-black/50", className)}
       {...props}
     />
   );
@@ -35,7 +39,7 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-lg",
+          "dialog-content fixed left-1/2 top-1/2 z-50 grid max-h-[85vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl border bg-card p-6 text-card-foreground shadow-lg",
           className,
         )}
         {...props}
