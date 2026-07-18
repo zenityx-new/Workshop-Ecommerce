@@ -13,6 +13,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/submit-button";
@@ -100,10 +101,9 @@ export function RegisterForm({ redirectTo }: { redirectTo: string }) {
 
           <div>
             <Label htmlFor="password">รหัสผ่าน</Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               placeholder="ตั้งรหัสผ่านอย่างน้อย 8 ตัวอักษร"
               className="mt-1.5"
