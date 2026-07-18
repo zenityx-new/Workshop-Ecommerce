@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/seller/orders", label: "คำสั่งซื้อ" },
   { href: "/seller/promotions", label: "โปรโมชั่น" },
   { href: "/seller/reviews", label: "รีวิว" },
+  { href: "/seller/reports", label: "รายงาน" },
   { href: "/seller/shop-settings", label: "ตั้งค่าร้านค้า" },
 ];
 

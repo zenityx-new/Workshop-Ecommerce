@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/admin", label: "แดชบอร์ด" },
   { href: "/admin/sellers/pending", label: "ผู้ขายรออนุมัติ" },
+  { href: "/admin/shops", label: "ร้านค้า" },
   { href: "/admin/users", label: "จัดการผู้ใช้" },
+  { href: "/admin/categories", label: "หมวดหมู่" },
   { href: "/admin/audit-logs", label: "ประวัติการดำเนินการ" },
 ];
 

@@ -941,6 +941,18 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: undefined;
       };
+      warn_shop: {
+        Args: { p_shop_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      set_shop_status: {
+        Args: {
+          p_shop_id: string;
+          p_status: Database["public"]["Enums"]["shop_status"];
+          p_reason?: string | null;
+        };
+        Returns: undefined;
+      };
       place_order: {
         Args: {
           p_address_id: string;
