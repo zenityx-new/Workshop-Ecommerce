@@ -111,8 +111,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/auto
 
 ตารางเวลาบน production ตั้งไว้ใน [`vercel.json`](./vercel.json) — Vercel Cron จะแนบ header `Authorization: Bearer <CRON_SECRET>` ให้อัตโนมัติเมื่อมี env `CRON_SECRET` ในโปรเจกต์
 
-> **หมายเหตุแผน Vercel**: schedule แบบรายชั่วโมง (`0 * * * *`) ต้องใช้แผน Pro ขึ้นไป
-> บนแผน Hobby (cron รายวัน) ให้แก้ `auto-cancel` เป็นเช่น `0 */6 * * *` หรือรายวันตามที่แผนรองรับ
+> **หมายเหตุแผน Vercel**: ค่าเริ่มต้นตั้งเป็น **รายวัน** (`0 2 * * *` / `0 3 * * *`) เพื่อให้ deploy ได้บนแผน **Hobby** (Hobby จำกัด cron วันละครั้ง)
+> ถ้าใช้แผน **Pro** อยากให้ `auto-cancel` ถี่ขึ้น (เช่นรายชั่วโมง `0 * * * *` เพื่อยกเลิกออเดอร์ค้างชำระได้ไวขึ้น) แก้ที่ `vercel.json` ได้เลย
+> เกณฑ์อายุจริง (24 ชม. / 7 วัน) อยู่ใน RPC ฝั่ง DB อยู่แล้ว — cron รายวันแค่ทำให้ "รอบตรวจ" ห่างขึ้น (ออเดอร์ค้างชำระอาจถูกยกเลิกช้าสุด ~48 ชม.)
 
 ## Deploy (Vercel)
 
