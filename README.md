@@ -116,12 +116,18 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/auto
 
 ## Deploy (Vercel)
 
-1. push โค้ดขึ้น Git แล้ว import โปรเจกต์ใน Vercel
-2. ตั้ง environment variables ทั้งหมดข้างบนในหน้า Project → Settings → Environment Variables
-   (โดยเฉพาะ `SUPABASE_SERVICE_ROLE_KEY` และ `CRON_SECRET` — ใส่ให้ครบทุก environment ที่ต้องใช้)
-3. ตั้ง `NEXT_PUBLIC_SITE_URL` เป็นโดเมนจริง (ไม่มี `/` ท้าย)
-4. Deploy — Vercel จะอ่าน `vercel.json` แล้วตั้ง Cron ให้อัตโนมัติ
-5. ตรวจหลัง deploy: เปิด `/sitemap.xml`, `/robots.txt`, ลองยิง `/api/cron/*` (ต้องได้ 401 ถ้าไม่มี secret) และเช็ค Cron ที่หน้า Vercel → Cron Jobs
+**ก่อน deploy** ต้องมี Supabase project ที่รัน migrations + seed แล้ว และปิด/เปิด Confirm email ตามต้องการ (ดู [`docs/STUDENT-GUIDE.md`](./docs/STUDENT-GUIDE.md) ข้อ 3–6)
+
+1. push โค้ดขึ้น GitHub → เข้า https://vercel.com → **Add New… → Project** → เลือก repo นี้ → **Import**
+2. ที่หน้า Configure Project → **Environment Variables** ใส่ให้ครบ:
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`
+   (`SUPABASE_SERVICE_ROLE_KEY` และ `CRON_SECRET` เป็นความลับ — สำหรับ prod ควรสุ่ม `CRON_SECRET` ใหม่)
+3. ตั้ง `NEXT_PUBLIC_SITE_URL` เป็นโดเมนจริงที่ Vercel จะให้ (ไม่มี `/` ท้าย) — ครั้งแรกอาจยังไม่รู้โดเมน ให้ deploy ก่อนแล้วกลับมาแก้ค่านี้ + redeploy
+4. กด **Deploy** — Vercel รัน `next build` เองและอ่าน `vercel.json` ตั้ง Cron ให้อัตโนมัติ
+5. ตรวจหลัง deploy: เปิด `/`, `/sitemap.xml`, `/robots.txt`, ลองยิง `/api/cron/*` (ต้องได้ 401 ถ้าไม่มี secret) และเช็ค Cron ที่ Vercel → **Cron Jobs**
+
+> **Confirm email:** ตั้งค่าใน Supabase project ที่ผูกกับ prod — workshop/ทดสอบ = ปิด, ใช้งานจริง = เปิด (ดูขั้นตอนในคู่มือนักเรียน)
 
 > รูปภาพดึงจาก Supabase public storage (ตั้ง `remotePatterns` ใน `next.config.ts` แล้ว)
 > ปัจจุบันปิด image optimizer ไว้ (`unoptimized: true`) — บน Vercel เปิดใช้ได้โดยลบบรรทัดนั้น
