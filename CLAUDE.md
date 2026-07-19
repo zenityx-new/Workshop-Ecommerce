@@ -15,7 +15,7 @@
 | 5 — Checkout & Orders | ✅ เสร็จ (ทดสอบแล้ว) | `f3d6502` |
 | 6 — คูปอง & รีวิว | ✅ เสร็จ (ทดสอบ business-logic 19/19 ผ่าน 2026-07-18) | `0bcd4da` |
 | 7 — Dashboards & ควบคุมร้าน | ✅ เสร็จ (ทดสอบ moderation RPC 7/7 ผ่าน 2026-07-18 · รอผู้ใช้ทดสอบ UI) | — |
-| 8 — Cron & Deploy | ⬜ ยังไม่เริ่ม | — |
+| 8 — Cron & Deploy | ✅ เสร็จโค้ด/config (build ผ่าน, cron ทดสอบจริง · รอผู้ใช้ deploy ขึ้น Vercel) | — |
 
 **สิ่งที่เบี่ยงจากสเปกเดิม (อนุมัติโดยผู้ใช้ระหว่างทางแล้ว):**
 - ใช้ **Next.js 16** (ไม่ใช่ 15 ตาม Section 1) — `create-next-app@latest` ติดตั้ง 16 มาให้ และ `@opennextjs/cloudflare` รองรับ Next 16 อยู่แล้ว จึงใช้ต่อ (มากับ React 19 + Tailwind v4)
@@ -29,13 +29,16 @@
 - **หน้าแอดมินดูเอกสารผู้สมัครเป็น Modal** (2026-07-18, ผู้ใช้ขอ) — คลิก "ดูรูปบัตรประชาชน"/"เอกสารเพิ่มเติม" ใน `/admin/sellers/pending` แล้วเด้ง Modal แสดงรูป/ฝัง PDF ในหน้าเดิม (เดิมเปิดแท็บใหม่) — component ใหม่ `src/components/document-viewer.tsx` (แยก image/pdf ตามนามสกุล, มี fallback "เปิดในแท็บใหม่" + ข้อความเตือนเมื่อเบราว์เซอร์แสดง HEIC ไม่ได้)
 - **Buyer dashboard ที่หน้า `/account`** (2026-07-18, ผู้ใช้ขอให้ buyer มี dashboard สวยเทียบเท่า seller/admin) — เฉพาะ role buyer: hero โปรไฟล์ (banner+avatar) + การ์ดสรุป (คำสั่งซื้อทั้งหมด/กำลังดำเนินการ/รอยืนยันรับ/ยอดใช้จ่าย) + คำสั่งซื้อล่าสุด (OrderStatusBadge) + quick actions (ซื้อ/ออเดอร์/wishlist/ที่อยู่ พร้อมตัวเลข) + ฟอร์มแก้โปรไฟล์ · seller/admin คงหน้าโปรไฟล์แบบเรียบ (ถูกล็อกจากฝั่งซื้อ) แต่ใช้ hero เดียวกัน (`src/app/(storefront)/account/page.tsx`)
 
+- **เปลี่ยน deploy target จาก Cloudflare → Vercel** (2026-07-20, Phase 8, ผู้ใช้เลือกเอง) — สาเหตุ: Next.js 16 เปลี่ยน `middleware.ts` → `src/proxy.ts` และ**บังคับ proxy รันบน Node runtime เท่านั้น** (ตั้ง `runtime:"edge"` แล้ว build ฟ้อง *"Proxy does not support Edge runtime"*) แต่ `@opennextjs/cloudflare` v1.20 รองรับเฉพาะ Edge middleware → build ถูกบล็อกที่ขั้น bundle (`Node.js middleware is not currently supported`) เป็นความเข้ากันไม่ได้ของ tooling ไม่ใช่บั๊กของแอป · ทางเลือกที่พิจารณา: downgrade Next 15 (คืน edge middleware ได้ แต่ต้อง re-test โดยเฉพาะอัปโหลดไฟล์ใหญ่ที่พึ่ง `proxyClientMaxBodySize` ดู [[gotcha-storage-mime-and-heic-uploads]]) / ยก guard ไป layout (เสีย session-refresh ที่ Supabase แนะนำให้ทำใน middleware) / **Vercel (เลือก)** — Vercel รับ Next 16 proxy แบบ Node ตรงๆ แก้โค้ด 0 จุด · สิ่งที่ทำ: ลบ tooling Cloudflare ทั้งหมด (`@opennextjs/cloudflare`, `wrangler`, `wrangler*.jsonc`, `open-next.config.ts`, `workers/`), เพิ่ม `vercel.json` (Vercel Cron: auto-cancel `0 * * * *`, auto-complete `0 3 * * *` — รายชั่วโมงต้องแผน Pro, Hobby ใช้รายวัน), Vercel Cron แนบ `Authorization: Bearer <CRON_SECRET>` ให้อัตโนมัติเมื่อมี env นี้ · `next.config.ts` คง `images.unoptimized:true` ไว้ (บน Vercel ลบออกเพื่อเปิด optimizer ได้)
+- **Phase 8 ที่ทำเสร็จ** (2026-07-20): (1) migration `20260720100000_phase8_cron_rpcs.sql` — RPC `auto_cancel_unpaid_orders(interval)` + `auto_complete_delivered_orders(interval)` security definer, revoke จาก public/authenticated เหลือ grant แค่ service_role, ไม่พึ่ง `auth.uid()` (changed_by/cancelled_by = null) · (2) endpoint `POST /api/cron/auto-cancel` + `/auto-complete` ตรวจ `CRON_SECRET` ผ่าน Bearer หรือ `?secret=` (fail-closed ถ้าไม่ตั้ง secret) — helper `src/app/api/cron/_auth.ts`, ใช้ `createAdminClient()` · (3) UI states: `src/app/{not-found,error,global-error,loading}.tsx` (lucide, ไทย, ไม่มีอีโมจิ) · (4) SEO: `src/app/robots.ts` (disallow เขตหลังบ้าน/api) + `src/app/sitemap.ts` (ดึงสินค้า/ร้าน active จาก DB, revalidate 1 ชม.) ใช้ env `NEXT_PUBLIC_SITE_URL` · (5) README เขียนใหม่ทั้งไฟล์ (Vercel) · ทดสอบจริง: 401 เมื่อไม่มี/ผิด secret, auto-complete ปิดออเดอร์ค้าง 7 วัน 2 รายการจาก seed, `next build` ผ่าน, 404/robots/sitemap เรนเดอร์ถูก
+
 **บัญชีทดสอบที่มีอยู่** (อัปเดต 2026-07-18): seed ข้อมูลตัวอย่างสำหรับ Phase 7 dashboards แล้ว — admin `aekkarat@zenityx.com` / `Demo1234!`, seller `somchai@gmail.com` / `Demo1234!` (ร้าน 108 Shop), buyer `warunya@gmail.com` / `Demo1234!` (ทั้ง 3 role รหัสเดียวกัน `Demo1234!` ตั้งผ่าน service role) · `Demo1234!` เป็นรหัสชั่วคราวที่ตั้งผ่าน service role (`update auth.users set encrypted_password=extensions.crypt(...,gen_salt('bf'))`) — เปลี่ยนก่อน deploy · ข้อมูล seed: 10 สินค้า (ติดมาร์ก `[[demo]]` ใน description), 24 ออเดอร์หลายสถานะ/วันที่, 2 คูปอง (SAVE50/WELCOME10), 8 รีวิว (rating ร้าน 4.50), 1 ตักเตือน — ยังไม่มีรูปสินค้า (placeholder)
 
 ## 1. Tech Stack
 
 - **Next.js 15** (App Router, TypeScript, Server Actions) + Tailwind + shadcn/ui + Zod + Zustand (ตะกร้า)
 - **Supabase**: Postgres (เปิด RLS ทุกตาราง), Auth, Storage, Realtime
-- **Deploy**: Cloudflare Workers ผ่าน `@opennextjs/cloudflare`
+- **Deploy**: Vercel + Vercel Cron (เดิมวางแผน Cloudflare Workers ผ่าน `@opennextjs/cloudflare` แต่เปลี่ยนเป็น Vercel — ดูเหตุผลในหัวข้อเบี่ยงจากสเปกเดิม §0)
 - **PromptPay QR**: ไลบรารี `promptpay-qr` + `qrcode` (ไม่ใช้ payment gateway)
 
 ## 2. กฎเหล็ก (ห้ามละเมิด)
@@ -168,9 +171,10 @@ supabase/           # migrations/, seed.sql
 src/proxy.ts        # role guard (Next.js 16 renamed middleware.ts → proxy.ts)
 ```
 
-## 9. Deploy Notes (Cloudflare)
+## 9. Deploy Notes (Vercel)
 
-- Build/deploy: `npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy`
-- Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only), `CRON_SECRET`
-- `next/image` ใช้ `unoptimized` หรือ custom loader (Workers ไม่มี optimizer)
-- เลี่ยงไลบรารีที่พึ่ง Node API (fs, net) — เลือกตัวที่รองรับ Workers
+- Deploy: import repo ใน Vercel → ตั้ง env → deploy (Vercel รัน `next build` เอง, ไม่ต้องมี adapter)
+- Env ที่ต้องตั้งใน Vercel: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (server only), `CRON_SECRET`
+- Cron: อ่านจาก `vercel.json` อัตโนมัติ — Vercel Cron แนบ `Authorization: Bearer <CRON_SECRET>` ให้เองเมื่อมี env `CRON_SECRET` · schedule รายชั่วโมงต้องแผน Pro (Hobby = รายวัน)
+- `next/image`: คง `unoptimized:true` ไว้ก็ได้ หรือลบเพื่อเปิด optimizer ของ Vercel (remotePatterns ครอบ Supabase storage แล้ว)
+- เดิมสเปกวางแผน Cloudflare แต่ Next 16 proxy (Node-only) เข้ากับ `@opennextjs/cloudflare` ไม่ได้ — ดู §0

@@ -18,7 +18,9 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: "50mb",
   },
   images: {
-    // Cloudflare Workers ไม่มี image optimizer — ปิด optimization
+    // ปิด optimizer ไว้เพื่อความเรียบง่าย/พกพาข้ามแพลตฟอร์ม — บน Vercel มี
+    // image optimizer ให้ใช้ ถ้าต้องการเปิดให้ลบบรรทัดนี้ (remotePatterns
+    // ครอบ Supabase public storage ไว้แล้ว)
     unoptimized: true,
     remotePatterns: [
       {

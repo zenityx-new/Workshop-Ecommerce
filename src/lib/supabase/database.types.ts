@@ -914,6 +914,14 @@ export type Database = {
         Args: Record<never, never>;
         Returns: boolean;
       };
+      auto_cancel_unpaid_orders: {
+        Args: { p_max_age?: string } | Record<never, never>;
+        Returns: number;
+      };
+      auto_complete_delivered_orders: {
+        Args: { p_max_age?: string } | Record<never, never>;
+        Returns: number;
+      };
       current_user_role: {
         Args: Record<never, never>;
         Returns: Database["public"]["Enums"]["user_role"];
